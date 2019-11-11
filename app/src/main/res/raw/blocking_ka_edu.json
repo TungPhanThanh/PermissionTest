@@ -1,0 +1,12 @@
+{
+  "websites": [
+    "http://m.facebook.com",
+    "http://instagram.com",
+    "http://twitter.com"
+  ],
+  "application": [
+    "com.google.android.youtube",
+    "com.facebook.katana",
+    "com.android.vending"
+  ]
+}

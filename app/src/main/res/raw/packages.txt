@@ -1,0 +1,17 @@
+NAME                       
+system_server
+com.google.android.inputmethod.latin
+com.android.systemui
+com.android.phone
+com.android.settings
+com.google.android.gms.persistent
+com.google.process.gservices
+com.android.launcher3
+com.google.android.gms
+com.google.android.setupwizard
+com.google.android.gms.unstable
+com.google.android.partnersetup
+com.google.android.videos
+com.android.vending
+com.android.vending:download_service
+com.android.chrome

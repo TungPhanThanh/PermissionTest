@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">ProcessManager</string>
+    <string name="app_name">KA Edu</string>
+    <string name="dialog_permission">Allow <b>KA Edu</b> to access devices</string>
 </resources>

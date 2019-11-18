@@ -13,6 +13,10 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import com.ibct.kanganedu.Grp1Grpc;
+import com.ibct.kanganedu.StdAsk;
+import com.ibct.kanganedu.StdRet;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,10 +28,16 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 
 import static com.tungpt.processmanager.MainActivity.TAG;
 
 public class ProcessService extends Service {
+    private ManagedChannel channel;
     Handler mHandler = new Handler();
     String[] application;
 
@@ -39,17 +49,10 @@ public class ProcessService extends Service {
         super.onCreate();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         getJson();
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                retriveNewApp();
-                mHandler.postDelayed(this, 2000);
-            }
-        }, 2000);
+        processChecked();
         return START_NOT_STICKY;
     }
 
@@ -105,9 +108,7 @@ public class ProcessService extends Service {
                 application[i] = jSONArray.getString(i);
                 Log.d(TAG, "onCreate: " + application[i]);
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (JSONException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -122,5 +123,36 @@ public class ProcessService extends Service {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    private void processChecked() {
+        Runnable processRunnable = new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.Q)
+            @Override
+            public void run() {
+                retriveNewApp();
+                mHandler.postDelayed(this, 3000);
+            }
+        };
+
+        Runnable pullRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    channel = ManagedChannelBuilder.forAddress("13.124.244.187", 8081).usePlaintext().build();
+                    Grp1Grpc.Grp1BlockingStub stub = Grp1Grpc.newBlockingStub(channel);
+                    StdAsk request = StdAsk.newBuilder().setAskName("setup-pull").build();
+                    StdRet reply = stub.stdRpc(request);
+                    Log.d("aaaaaa", "onClick: " + request.getAskStr() + "/" + reply.getRetStr() + "/" + reply.getRetSta());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                mHandler.postDelayed(this, 3 * 60 * 1000);
+            }
+        };
+
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+        executor.execute(processRunnable);
+        executor.execute(pullRunnable);
     }
 }

@@ -1,6 +1,6 @@
 package com.tungpt.processmanager;
 
-import android.app.AppOpsManager;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
@@ -8,47 +8,49 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.ibct.kanganedu.Grp1Grpc;
+import com.ibct.kanganedu.StdAsk;
+import com.ibct.kanganedu.StdRet;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     public static final String TAG = "aaa";
+    private EditText editTextUser;
+    private EditText editTextPassword;
     private Button mButton;
     private Dialog mDialogPermission;
+    private String deviceId;
+    private ManagedChannel channel;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mButton = findViewById(R.id.button_permission);
-        mButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                startActivity(intent);
-            }
-        });
-
+        channel = ManagedChannelBuilder.forAddress("13.124.244.187", 8081).usePlaintext().build();
         UsageStatsManager mUsageStatsManager = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
         long time = System.currentTimeMillis();
         List stats = mUsageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 1000 * 10, time);
@@ -58,29 +60,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Permission is Granted", Toast.LENGTH_LONG).show();
         }
-
-//        Process process;
-//        try {
-//            process = Runtime.getRuntime().exec("adb shell 'ps'");
-//            BufferedReader input = new BufferedReader(new InputStreamReader(
-//                    process.getInputStream()));
-//
-//            String line = null;
-//
-//            while ((line = input.readLine()) != null)
-//            {
-//                Log.d(TAG, "onCreate: " + line);
-//            }
-//
-//            int exitVal = process.waitFor();
-//            System.out.println("Exited with error code " + exitVal);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-        Intent intent1 = new Intent(this, ProcessService.class);
-        startService(intent1);
 
         try {
             InputStream inputStream = getResources().openRawResource(R.raw.packages);
@@ -96,6 +75,59 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        initView();
+
+    }
+
+    @SuppressLint("HardwareIds")
+    private void initView() {
+        editTextUser = findViewById(R.id.edit_text_user_id);
+        editTextPassword = findViewById(R.id.edit_text_user_password);
+        mButton = findViewById(R.id.button_login);
+        mButton.setOnClickListener(this);
+        deviceId = Settings.Secure.getString(this.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
+    }
+
+    private void handleLogin() {
+        String statusCode = "";
+        Log.d(TAG, "handleLogin: " + editTextUser.getText() + "/" + editTextPassword.getText());
+        if (editTextUser.getText().equals("") || editTextPassword.getText().equals("")) {
+            Toast.makeText(this, "Input User ID or Password", Toast.LENGTH_SHORT).show();
+        } else {
+            try {
+                Grp1Grpc.Grp1BlockingStub stub = Grp1Grpc.newBlockingStub(channel);
+                StdAsk request = StdAsk.newBuilder().setAskName("app-login").setAskStr("{\n" +
+                        "    \"UserId\": \"" + editTextUser.getText() + "\",\n" +
+                        "    \"Password\": \"" + editTextPassword.getText() + "\",\n" +
+                        "    \"MacAddr\": \"" + deviceId + "\",\n" +
+                        "    \"RDeviceYes\": true,\n" +
+                        "    \"CDeviceYes\": true\n" +
+                        "}").build();
+                StdRet reply = stub.stdRpc(request);
+                Log.d("aaaaaa", "onClick: " + request.getAskStr() + "/" + reply.getRetStr() + "/" + reply.getRetSta());
+                statusCode = reply.getRetSta();
+            } catch (Exception e) {
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                e.printStackTrace(pw);
+                pw.flush();
+            }
+            if (statusCode.equals("200")) {
+                Intent intent = new Intent(this, HomeActivity.class);
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "User ID or Password is incorrect!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.button_login) {
+            handleLogin();
         }
 
     }
@@ -146,7 +178,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        mDialogPermission.dismiss();
+        if (mDialogPermission != null) {
+            mDialogPermission.dismiss();
+        }
         Log.d(TAG, "onRestart: ");
         UsageStatsManager mUsageStatsManager = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
         long time = System.currentTimeMillis();
@@ -162,64 +196,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         Log.d(TAG, "onStop: ");
-    }
-
-    public class UsagePermissionMonitor {
-        private AppOpsManager mAppOpsManager;
-        private final Context context;
-        private final Handler handler;
-        private boolean isListening;
-        private Boolean lastValue;
-
-        public UsagePermissionMonitor(Context context) {
-            this.context = context;
-            mAppOpsManager = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
-            handler = new Handler();
-        }
-
-        public void startListening() {
-            mAppOpsManager.startWatchingMode(AppOpsManager.OPSTR_GET_USAGE_STATS, context.getPackageName(), usageOpListener);
-            isListening = true;
-        }
-
-        public void stopListening() {
-            lastValue = null;
-            isListening = false;
-            mAppOpsManager.stopWatchingMode(usageOpListener);
-            handler.removeCallbacks(checkUsagePermission);
-        }
-
-        private final AppOpsManager.OnOpChangedListener usageOpListener = new AppOpsManager.OnOpChangedListener() {
-            @Override
-            public void onOpChanged(String op, String packageName) {
-                // Android sometimes sets packageName to null
-                if (packageName == null || context.getPackageName().equals(packageName)) {
-                    // Android actually notifies us of changes to ops other than the one we registered for, so filtering them out
-                    if (AppOpsManager.OPSTR_GET_USAGE_STATS.equals(op)) {
-                        // We're not in main thread, so post to main thread queue
-                        handler.post(checkUsagePermission);
-                    }
-                }
-            }
-        };
-
-        private final Runnable checkUsagePermission = new Runnable() {
-            @Override
-            public void run() {
-                if (isListening) {
-                    int mode = mAppOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myPid(), context.getPackageName());
-                    boolean enabled = mode == AppOpsManager.MODE_ALLOWED;
-
-                    // Each change to the permission results in two callbacks instead of one.
-                    // Filtering out the duplicates.
-                    if (lastValue == null || lastValue != enabled) {
-                        lastValue = enabled;
-
-                        // TODO: Do something with the result
-                        Log.i(UsagePermissionMonitor.class.getSimpleName(), "Usage permission changed: " + enabled);
-                    }
-                }
-            }
-        };
     }
 }

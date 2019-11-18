@@ -6,12 +6,18 @@ import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.WindowManager;
 
 import androidx.annotation.RequiresApi;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.ibct.kanganedu.Grp1Grpc;
 import com.ibct.kanganedu.StdAsk;
@@ -38,6 +44,7 @@ import static com.tungpt.processmanager.MainActivity.TAG;
 
 public class ProcessService extends Service {
     private ManagedChannel channel;
+    private ConstraintLayout mLayout;
     Handler mHandler = new Handler();
     String[] application;
 
@@ -82,8 +89,21 @@ public class ProcessService extends Service {
                     for (String s : application) {
                         if (currentApp.equals(s)) {
                             Intent intent = new Intent(this, BlockActivity.class);
+                            intent.putExtra("unallowed",currentApp);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
+//                            WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+//                            mLayout = new ConstraintLayout(this);
+//                            WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+//                            lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
+//                            lp.format = PixelFormat.TRANSLUCENT;
+//                            lp.flags |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+//                            lp.width = WindowManager.LayoutParams.WRAP_CONTENT;
+//                            lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+//                            lp.gravity = Gravity.TOP;
+//                            LayoutInflater inflater = LayoutInflater.from(this);
+//                            inflater.inflate(R.layout.restrict_screen, mLayout);
+//                            wm.addView(mLayout, lp);
                         } else {
 
                         }

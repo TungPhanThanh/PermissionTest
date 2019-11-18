@@ -6,6 +6,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -23,6 +24,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.ibct.kanganedu.Grp1Grpc;
 import com.ibct.kanganedu.StdAsk;
 import com.ibct.kanganedu.StdRet;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mButton;
     private Dialog mDialogPermission;
     private String deviceId;
+    private String UserID;
     private ManagedChannel channel;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
@@ -107,7 +112,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         "    \"CDeviceYes\": true\n" +
                         "}").build();
                 StdRet reply = stub.stdRpc(request);
-                Log.d("aaaaaa", "onClick: " + request.getAskStr() + "/" + reply.getRetStr() + "/" + reply.getRetSta());
+                JSONObject jsonObject = new JSONObject(reply.getRetStr());
+                UserID = jsonObject.getString("DeviceId");
+                Log.d("aaaaaa", "onClick: " + request.getAskStr() + "/" + UserID + "/" + reply.getRetSta());
                 statusCode = reply.getRetSta();
             } catch (Exception e) {
                 StringWriter sw = new StringWriter();
@@ -116,7 +123,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 pw.flush();
             }
             if (statusCode.equals("200")) {
+                SharedPreferences sharedPreferences = getSharedPreferences("User", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("UserId",UserID);
+                editor.apply();
                 Intent intent = new Intent(this, HomeActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
             } else {
                 Toast.makeText(this, "User ID or Password is incorrect!", Toast.LENGTH_SHORT).show();

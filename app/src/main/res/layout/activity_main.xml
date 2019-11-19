@@ -5,9 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
-    tools:context=".MainActivity"
     android:focusable="true"
-    android:focusableInTouchMode="true">
+    android:focusableInTouchMode="true"
+    tools:context=".MainActivity">
 
     <TextView
         android:id="@+id/text_company"
@@ -27,7 +27,7 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="44dp"
         android:text="User ID"
         android:textColor="@android:color/black"
         android:textSize="18sp"
@@ -36,7 +36,7 @@
 
     <EditText
         android:id="@+id/edit_text_user_id"
-        android:layout_width="300dp"
+        android:layout_width="330dp"
         android:layout_height="50dp"
         android:layout_gravity="center"
         android:layout_marginTop="8dp"
@@ -60,7 +60,7 @@
 
     <EditText
         android:id="@+id/edit_text_user_password"
-        android:layout_width="300dp"
+        android:layout_width="330dp"
         android:layout_height="50dp"
         android:layout_gravity="center"
         android:layout_marginTop="8dp"
@@ -72,9 +72,51 @@
         app:layout_constraintStart_toStartOf="@+id/text_password"
         app:layout_constraintTop_toBottomOf="@+id/text_password" />
 
+    <TextView
+        android:id="@+id/text_view_register"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="44dp"
+        android:text="Register User Device"
+        android:textColor="@android:color/black"
+        app:layout_constraintEnd_toEndOf="@+id/edit_text_user_password"
+        app:layout_constraintHorizontal_bias="0.122"
+        app:layout_constraintStart_toStartOf="@+id/edit_text_user_password"
+        app:layout_constraintTop_toBottomOf="@+id/edit_text_user_password" />
+
+    <Switch
+        android:id="@+id/switch_register"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/text_view_register"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/text_view_register"
+        app:layout_constraintTop_toTopOf="@+id/text_view_register" />
+
+    <TextView
+        android:id="@+id/text_view_change"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:text="Change User Device"
+        android:textColor="@android:color/black"
+        app:layout_constraintEnd_toEndOf="@+id/text_view_register"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/text_view_register"
+        app:layout_constraintTop_toBottomOf="@+id/text_view_register" />
+
+    <Switch
+        android:id="@+id/switch_change"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/text_view_change"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/text_view_change"
+        app:layout_constraintTop_toTopOf="@+id/text_view_change" />
+
     <Button
         android:id="@+id/button_login"
-        android:layout_width="wrap_content"
+        android:layout_width="150dp"
         android:layout_height="40dp"
         android:background="@drawable/border_edit_text"
         android:text="Log In"
@@ -82,7 +124,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/edit_text_user_password"
-        app:layout_constraintVertical_bias="0.301" />
+        app:layout_constraintVertical_bias="0.583" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

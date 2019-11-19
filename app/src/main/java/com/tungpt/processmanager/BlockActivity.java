@@ -9,6 +9,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,6 +25,7 @@ public class BlockActivity extends AppCompatActivity {
     private Button mButtonExit;
     private String process;
     private String systemId;
+    private EditText editText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +34,8 @@ public class BlockActivity extends AppCompatActivity {
         Intent intent = getIntent();
         process = intent.getStringExtra("unallowed");
         Log.d("aaaa", "onCreate: " + process);
+        editText = findViewById(R.id.edit_text_restricted);
+        editText.setText(process);
         mButtonExit = findViewById(R.id.button_exit);
         mButtonExit.setOnClickListener(new View.OnClickListener() {
             @Override

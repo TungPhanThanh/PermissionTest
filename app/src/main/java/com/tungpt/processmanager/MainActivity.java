@@ -9,13 +9,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Browser;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -25,7 +28,6 @@ import com.ibct.kanganedu.Grp1Grpc;
 import com.ibct.kanganedu.StdAsk;
 import com.ibct.kanganedu.StdRet;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -45,9 +47,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private EditText editTextUser;
     private EditText editTextPassword;
     private Button mButton;
+    private Switch aSwitchRegister;
+    private Switch aSwitchChange;
     private Dialog mDialogPermission;
     private String deviceId;
     private String UserID;
+    private Boolean checkRegister = false;
+    private Boolean checkChange = false;
     private ManagedChannel channel;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
@@ -55,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        channel = ManagedChannelBuilder.forAddress("13.124.244.187", 8081).usePlaintext().build();
+        initView();
         UsageStatsManager mUsageStatsManager = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
         long time = System.currentTimeMillis();
         List stats = mUsageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 1000 * 10, time);
@@ -74,15 +80,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 // `the words in the file are separated by space`, so to get each words
                 String[] words = eachline.split(" ");
                 eachline = bufferedReader.readLine();
-                for (int i = 0; i < words.length; i++) {
-                    Log.d(TAG, "onCreate:" + words[i]);
+                for (String word : words) {
+                    Log.d(TAG, "onCreate:" + word);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        initView();
 
     }
 
@@ -90,8 +94,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initView() {
         editTextUser = findViewById(R.id.edit_text_user_id);
         editTextPassword = findViewById(R.id.edit_text_user_password);
+        aSwitchRegister = findViewById(R.id.switch_register);
+        aSwitchChange = findViewById(R.id.switch_change);
         mButton = findViewById(R.id.button_login);
         mButton.setOnClickListener(this);
+        aSwitchRegister.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                checkRegister = isChecked;
+                Log.v("Switch State register=", "" + checkRegister);
+            }
+        });
+
+        aSwitchChange.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                checkChange = isChecked;
+                Log.v("Switch State change=", "" + checkChange);
+
+            }
+        });
         deviceId = Settings.Secure.getString(this.getContentResolver(),
                 Settings.Secure.ANDROID_ID);
     }
@@ -99,10 +121,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void handleLogin() {
         String statusCode = "";
         Log.d(TAG, "handleLogin: " + editTextUser.getText() + "/" + editTextPassword.getText());
-        if (editTextUser.getText().equals("") || editTextPassword.getText().equals("")) {
+        if (editTextUser.getText().length() == 0 || editTextPassword.getText().length() == 0) {
             Toast.makeText(this, "Input User ID or Password", Toast.LENGTH_SHORT).show();
         } else {
             try {
+                channel = ManagedChannelBuilder.forAddress("13.124.244.187", 8081).usePlaintext().build();
                 Grp1Grpc.Grp1BlockingStub stub = Grp1Grpc.newBlockingStub(channel);
                 StdAsk request = StdAsk.newBuilder().setAskName("app-login").setAskStr("{\n" +
                         "    \"UserId\": \"" + editTextUser.getText() + "\",\n" +
@@ -114,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 StdRet reply = stub.stdRpc(request);
                 JSONObject jsonObject = new JSONObject(reply.getRetStr());
                 UserID = jsonObject.getString("DeviceId");
-                Log.d("aaaaaa", "onClick: " + request.getAskStr() + "/" + UserID + "/" + reply.getRetSta());
+                Log.d("aaaa", request.getAskStr() + "/" + UserID + "/" + reply.getRetSta());
                 statusCode = reply.getRetSta();
             } catch (Exception e) {
                 StringWriter sw = new StringWriter();
@@ -125,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (statusCode.equals("200")) {
                 SharedPreferences sharedPreferences = getSharedPreferences("User", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putString("UserId",UserID);
+                editor.putString("UserId", UserID);
                 editor.apply();
                 Intent intent = new Intent(this, HomeActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);

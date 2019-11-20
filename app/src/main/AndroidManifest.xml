@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
@@ -33,31 +33,31 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".HomeActivity">
-
-        </activity>
+        <activity android:name=".BlockUrlActivity"></activity>
+        <activity android:name=".HomeActivity"></activity>
 
         <service
             android:name=".ForegroundService"
-            android:enabled="true"
-            android:exported="true" />
-
-        <activity
-            android:name=".BlockActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-
-        <service
-            android:name=".ProcessService"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
+
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service" />
         </service>
+
+        <activity
+            android:name=".BlockProcessActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <service
+            android:name=".ProcessService"
+            android:enabled="true"
+            android:exported="true"></service>
 
         <activity android:name=".MainActivity">
             <intent-filter>

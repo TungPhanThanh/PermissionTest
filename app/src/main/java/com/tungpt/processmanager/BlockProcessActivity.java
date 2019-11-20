@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -20,7 +19,7 @@ import com.ibct.kanganedu.StdRet;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
-public class BlockActivity extends AppCompatActivity {
+public class BlockProcessActivity extends AppCompatActivity {
 
     private Button mButtonExit;
     private String process;
@@ -34,13 +33,13 @@ public class BlockActivity extends AppCompatActivity {
         Intent intent = getIntent();
         process = intent.getStringExtra("unallowed");
         Log.d("aaaa", "onCreate: " + process);
-        editText = findViewById(R.id.edit_text_restricted);
+        editText = findViewById(R.id.edit_text_restricted_process);
         editText.setText(process);
         mButtonExit = findViewById(R.id.button_exit);
         mButtonExit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                sendLog();
+                sendLog(process, "");
                 finish();
                 Intent intent = new Intent(Intent.ACTION_MAIN);
                 intent.addCategory(Intent.CATEGORY_HOME);
@@ -53,7 +52,7 @@ public class BlockActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        sendLog();
+        sendLog(process, "");
         finish();
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_HOME);
@@ -61,18 +60,18 @@ public class BlockActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void sendLog() {
+    public void sendLog(String process, String url) {
         SharedPreferences sharedPreferences = getSharedPreferences("User", Context.MODE_PRIVATE);
-        String userId = sharedPreferences.getString("UserId","");
+        String userId = sharedPreferences.getString("UserId", "");
         try {
             ManagedChannel channel = ManagedChannelBuilder.forAddress("13.124.244.187", 8081).usePlaintext().build();
             Grp1Grpc.Grp1BlockingStub stub = Grp1Grpc.newBlockingStub(channel);
             @SuppressLint("HardwareIds") StdAsk request = StdAsk.newBuilder().setAskName("device-log-add").setAskStr("{\n" +
-                    "\t\"UdId\": "+ userId +",\n" +
+                    "\t\"UdId\": " + userId + ",\n" +
                     "\t\"LogType\": \"illegal access\",\n" +
                     "\t\"JsonLogs\": [\n" +
                     "\t\t{ \"Process\": \" " + process + " \", \"Url\": \"" + "" + "\", \"Ip\": \"" + "" + "\" },\n" +
-                    "\t\t{ \"Process\": \"com.android.chrome\", \"Url\": \"" + "" + "\", \"Ip\": \"" + "" + "\" }\n" +
+                    "\t\t{ \"Process\": \"" + url + "\", \"Url\": \"" + "" + "\", \"Ip\": \"" + "" + "\" }\n" +
                     "\t],\n" +
                     "\t\"StrLog\": \"mpgewrqio\"\n" +
                     "}").build();

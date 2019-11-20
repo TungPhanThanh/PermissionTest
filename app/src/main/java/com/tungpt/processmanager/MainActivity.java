@@ -43,6 +43,7 @@ import io.grpc.ManagedChannelBuilder;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    public static String[] sListProcess = {""};
     public static final String TAG = "aaa";
     private EditText editTextUser;
     private EditText editTextPassword;
@@ -62,6 +63,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initView();
+        Intent intent1 = new Intent(this, ProcessService.class);
+        startService(intent1);
         UsageStatsManager mUsageStatsManager = (UsageStatsManager) this.getSystemService(Context.USAGE_STATS_SERVICE);
         long time = System.currentTimeMillis();
         List stats = mUsageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 1000 * 10, time);

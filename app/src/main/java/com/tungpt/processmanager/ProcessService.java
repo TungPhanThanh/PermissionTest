@@ -1,27 +1,29 @@
 package com.tungpt.processmanager;
 
 import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.WindowManager;
 
 import androidx.annotation.RequiresApi;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.NotificationCompat;
 
 import com.ibct.kanganedu.Grp1Grpc;
 import com.ibct.kanganedu.StdAsk;
 import com.ibct.kanganedu.StdRet;
+import com.tungpt.processmanager.model.ListProcess;
+import com.tungpt.processmanager.model.ListUrl;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,6 +33,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -43,6 +46,9 @@ import io.grpc.ManagedChannelBuilder;
 import static com.tungpt.processmanager.MainActivity.TAG;
 
 public class ProcessService extends Service {
+    private static String CHANNEL_ID = "Notification";
+    private ArrayList<String> listProcess = new ArrayList<>();
+    private ArrayList<String> listUrls = new ArrayList<>();
     private ManagedChannel channel;
     private ConstraintLayout mLayout;
     Handler mHandler = new Handler();
@@ -58,9 +64,27 @@ public class ProcessService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        getJson();
-        processChecked();
-        return START_NOT_STICKY;
+        try {
+            getJson();
+            processChecked();
+            String input = intent.getStringExtra("inputExtra");
+            createNotificationChannel();
+            Intent notificationIntent = new Intent(this, MainActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                    0, notificationIntent, 0);
+            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setOngoing(true)
+                    .setPriority(2)
+                    .setContentTitle("KangAn Education")
+                    .setContentText(input)
+                    .setSmallIcon(R.drawable.ic_stat_name)
+                    .setContentIntent(pendingIntent)
+                    .build();
+            startForeground(1, notification);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return START_STICKY;
     }
 
     @Override
@@ -88,7 +112,7 @@ public class ProcessService extends Service {
                     pid = android.os.Process.myPid();
                     for (String s : application) {
                         if (currentApp.equals(s)) {
-                            Intent intent = new Intent(this, BlockActivity.class);
+                            Intent intent = new Intent(this, BlockProcessActivity.class);
                             intent.putExtra("unallowed",currentApp);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
@@ -158,12 +182,27 @@ public class ProcessService extends Service {
         Runnable pullRunnable = new Runnable() {
             @Override
             public void run() {
+                listProcess.clear();
+                listUrls.clear();
                 try {
                     channel = ManagedChannelBuilder.forAddress("13.124.244.187", 8081).usePlaintext().build();
                     Grp1Grpc.Grp1BlockingStub stub = Grp1Grpc.newBlockingStub(channel);
                     StdAsk request = StdAsk.newBuilder().setAskName("setup-pull").build();
                     StdRet reply = stub.stdRpc(request);
-                    Log.d("aaaaaa", "onClick: " + request.getAskStr() + "/" + reply.getRetStr() + "/" + reply.getRetSta());
+                    JSONObject jsonObject = new JSONObject(reply.getRetStr());
+                    JSONArray allowedProcesses = jsonObject.getJSONArray("AllowedProcesses");
+                    for (int i = 0; i < allowedProcesses.length(); i ++){
+                        JSONObject jsonObject1 =  allowedProcesses.getJSONObject(i);
+                        listProcess.add(jsonObject1.getString("Process"));
+                    }
+                    ListProcess.setListProcess(listProcess);
+                    JSONArray allowedUrls = jsonObject.getJSONArray("AllowedUrls");
+                    for (int i = 0; i < allowedUrls.length(); i ++){
+                        JSONObject object = allowedUrls.getJSONObject(i);
+                        listUrls.add(object.getString("Url"));
+                    }
+                    ListUrl.setListUrl(listUrls);
+                    Log.d("aaaaaa", "onClick: " + ListProcess.getsListProcess() + "/" + ListUrl.getsListUrl());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -174,5 +213,20 @@ public class ProcessService extends Service {
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
         executor.execute(processRunnable);
         executor.execute(pullRunnable);
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "KA Education",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(serviceChannel);
+            }
+        }
     }
 }

@@ -203,6 +203,7 @@ public class ProcessService extends Service {
                     }
                     ListUrl.setListUrl(listUrls);
                     Log.d("aaaaaa", "onClick: " + ListProcess.getsListProcess() + "/" + ListUrl.getsListUrl());
+                    channel.shutdown();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

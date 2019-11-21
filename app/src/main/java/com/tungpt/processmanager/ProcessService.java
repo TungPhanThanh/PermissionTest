@@ -22,6 +22,7 @@ import androidx.core.app.NotificationCompat;
 import com.ibct.kanganedu.Grp1Grpc;
 import com.ibct.kanganedu.StdAsk;
 import com.ibct.kanganedu.StdRet;
+import com.tungpt.processmanager.model.IsBlockChecking;
 import com.tungpt.processmanager.model.ListProcess;
 import com.tungpt.processmanager.model.ListUrl;
 
@@ -65,7 +66,6 @@ public class ProcessService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
-            getJson();
             processChecked();
             String input = intent.getStringExtra("inputExtra");
             createNotificationChannel();
@@ -110,26 +110,16 @@ public class ProcessService extends Service {
                 if (!mySortedMap.isEmpty()) {
                     currentApp = mySortedMap.get(mySortedMap.lastKey()).getPackageName();
                     pid = android.os.Process.myPid();
-                    for (String s : application) {
-                        if (currentApp.equals(s)) {
+                    for (int i = 0; i < ListProcess.getsListProcess().size(); i++) {
+                        if (!IsBlockChecking.getCheckingProcess() && !currentApp.equals("com.tungpt.processmanager") && !(ListProcess.getsListProcess().contains(currentApp))) {
+                            Log.d("aaaa", "LISTPROCESS: " + !(ListProcess.getsListProcess().contains(currentApp)));
+                            IsBlockChecking.setIsCheckingProcess(true);
                             Intent intent = new Intent(this, BlockProcessActivity.class);
-                            intent.putExtra("unallowed",currentApp);
+                            intent.putExtra("unallowed", currentApp);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
-//                            WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-//                            mLayout = new ConstraintLayout(this);
-//                            WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-//                            lp.type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
-//                            lp.format = PixelFormat.TRANSLUCENT;
-//                            lp.flags |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
-//                            lp.width = WindowManager.LayoutParams.WRAP_CONTENT;
-//                            lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
-//                            lp.gravity = Gravity.TOP;
-//                            LayoutInflater inflater = LayoutInflater.from(this);
-//                            inflater.inflate(R.layout.restrict_screen, mLayout);
-//                            wm.addView(mLayout, lp);
                         } else {
-
+                            //TODO something
                         }
                     }
                 }
@@ -170,14 +160,6 @@ public class ProcessService extends Service {
     }
 
     private void processChecked() {
-        Runnable processRunnable = new Runnable() {
-            @RequiresApi(api = Build.VERSION_CODES.Q)
-            @Override
-            public void run() {
-                retriveNewApp();
-                mHandler.postDelayed(this, 3000);
-            }
-        };
 
         Runnable pullRunnable = new Runnable() {
             @Override
@@ -191,18 +173,19 @@ public class ProcessService extends Service {
                     StdRet reply = stub.stdRpc(request);
                     JSONObject jsonObject = new JSONObject(reply.getRetStr());
                     JSONArray allowedProcesses = jsonObject.getJSONArray("AllowedProcesses");
-                    for (int i = 0; i < allowedProcesses.length(); i ++){
-                        JSONObject jsonObject1 =  allowedProcesses.getJSONObject(i);
+                    for (int i = 0; i < allowedProcesses.length(); i++) {
+                        JSONObject jsonObject1 = allowedProcesses.getJSONObject(i);
                         listProcess.add(jsonObject1.getString("Process"));
                     }
                     ListProcess.setListProcess(listProcess);
                     JSONArray allowedUrls = jsonObject.getJSONArray("AllowedUrls");
-                    for (int i = 0; i < allowedUrls.length(); i ++){
+                    for (int i = 0; i < allowedUrls.length(); i++) {
                         JSONObject object = allowedUrls.getJSONObject(i);
                         listUrls.add(object.getString("Url"));
                     }
                     ListUrl.setListUrl(listUrls);
                     Log.d("aaaaaa", "onClick: " + ListProcess.getsListProcess() + "/" + ListUrl.getsListUrl());
+                    channel.shutdown();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -210,9 +193,20 @@ public class ProcessService extends Service {
             }
         };
 
+        Runnable processRunnable = new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.Q)
+            @Override
+            public void run() {
+                if (ListProcess.getsListProcess() != null) {
+                    retriveNewApp();
+                }
+                mHandler.postDelayed(this, 3000);
+            }
+        };
+
         ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
-        executor.execute(processRunnable);
         executor.execute(pullRunnable);
+        executor.execute(processRunnable);
     }
 
     private void createNotificationChannel() {

@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.ibct.kanganedu.Grp1Grpc;
 import com.ibct.kanganedu.StdAsk;
 import com.ibct.kanganedu.StdRet;
+import com.tungpt.processmanager.model.IsBlockChecking;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -40,6 +41,7 @@ public class BlockProcessActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 sendLog(process, "");
+                IsBlockChecking.setIsCheckingProcess(false);
                 finish();
                 Intent intent = new Intent(Intent.ACTION_MAIN);
                 intent.addCategory(Intent.CATEGORY_HOME);
@@ -53,11 +55,20 @@ public class BlockProcessActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         sendLog(process, "");
+        IsBlockChecking.setIsCheckingProcess(false);
         finish();
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_HOME);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        sendLog(process, "");
+        IsBlockChecking.setIsCheckingProcess(false);
+        finish();
     }
 
     public void sendLog(String process, String url) {

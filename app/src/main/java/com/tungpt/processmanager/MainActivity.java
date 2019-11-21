@@ -9,12 +9,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Browser;
+import android.os.StrictMode;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
+import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -29,6 +30,8 @@ import com.ibct.kanganedu.StdAsk;
 import com.ibct.kanganedu.StdRet;
 
 import org.json.JSONObject;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,11 +46,11 @@ import io.grpc.ManagedChannelBuilder;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    public static String[] sListProcess = {""};
-    public static final String TAG = "aaa";
+    public static final String TAG = "PROCESSSERVICE";
     private EditText editTextUser;
     private EditText editTextPassword;
-    private Button mButton;
+    private Button mButtonLogin;
+    private Button mButtonChange;
     private Switch aSwitchRegister;
     private Switch aSwitchChange;
     private Dialog mDialogPermission;
@@ -56,12 +59,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Boolean checkRegister = false;
     private Boolean checkChange = false;
     private ManagedChannel channel;
+    private Connection.Response response;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (android.os.Build.VERSION.SDK_INT > 9)
+        {
+            StrictMode.ThreadPolicy policy = new
+                    StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
         initView();
         Intent intent1 = new Intent(this, ProcessService.class);
         startService(intent1);
@@ -74,22 +85,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             Toast.makeText(this, "Permission is Granted", Toast.LENGTH_LONG).show();
         }
-
-        try {
-            InputStream inputStream = getResources().openRawResource(R.raw.packages);
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String eachline = bufferedReader.readLine();
-            while (eachline != null) {
-                // `the words in the file are separated by space`, so to get each words
-                String[] words = eachline.split(" ");
-                eachline = bufferedReader.readLine();
-                for (String word : words) {
-                    Log.d(TAG, "onCreate:" + word);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            InputStream inputStream = getResources().openRawResource(R.raw.packages);
+//            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+//            String eachline = bufferedReader.readLine();
+//            while (eachline != null) {
+//                // `the words in the file are separated by space`, so to get each words
+//                String[] words = eachline.split(" ");
+//                eachline = bufferedReader.readLine();
+//                for (String word : words) {
+//                    Log.d(TAG, "onCreate:" + word);
+//                }
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
     }
 
@@ -99,8 +109,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         editTextPassword = findViewById(R.id.edit_text_user_password);
         aSwitchRegister = findViewById(R.id.switch_register);
         aSwitchChange = findViewById(R.id.switch_change);
-        mButton = findViewById(R.id.button_login);
-        mButton.setOnClickListener(this);
+        mButtonLogin = findViewById(R.id.button_login);
+        mButtonChange = findViewById(R.id.button_change);
+        mButtonLogin.setOnClickListener(this);
         aSwitchRegister.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -113,12 +124,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 checkChange = isChecked;
+                checkButton();
                 Log.v("Switch State change=", "" + checkChange);
 
             }
         });
         deviceId = Settings.Secure.getString(this.getContentResolver(),
                 Settings.Secure.ANDROID_ID);
+    }
+
+    private void checkButton(){
+        if (checkChange){
+            aSwitchRegister.setEnabled(false);
+            mButtonLogin.setVisibility(View.GONE);
+            mButtonChange.setVisibility(View.VISIBLE);
+        } else {
+            aSwitchRegister.setEnabled(true);
+            mButtonLogin.setVisibility(View.VISIBLE);
+            mButtonChange.setVisibility(View.GONE);
+        }
     }
 
     private void handleLogin() {
@@ -165,6 +189,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.button_login) {
+            try {
+                response = Jsoup.connect("https://" + "m.youtube.com").execute();
+                Log.d("MYCHROME", "isReached: " + response.statusCode());
+                if (response.statusCode() == 200) {
+                    Log.d("MYCHROME", "isReached: ");
+                }
+            } catch (Exception e) {
+                Log.d("aaa", e.getMessage());
+                e.printStackTrace();
+            }
             handleLogin();
         }
 
@@ -234,5 +268,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onStop() {
         super.onStop();
         Log.d(TAG, "onStop: ");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mDialogPermission != null) {
+            mDialogPermission.dismiss();
+        }
     }
 }

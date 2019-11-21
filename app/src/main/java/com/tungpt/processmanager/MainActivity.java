@@ -46,7 +46,7 @@ import io.grpc.ManagedChannelBuilder;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    public static final String TAG = "aaa";
+    public static final String TAG = "PROCESSSERVICE";
     private EditText editTextUser;
     private EditText editTextPassword;
     private Button mButtonLogin;
@@ -268,5 +268,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onStop() {
         super.onStop();
         Log.d(TAG, "onStop: ");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mDialogPermission != null) {
+            mDialogPermission.dismiss();
+        }
     }
 }

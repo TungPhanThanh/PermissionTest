@@ -15,7 +15,6 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
-import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -31,12 +30,7 @@ import com.ibct.kanganedu.StdRet;
 
 import org.json.JSONObject;
 import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
@@ -46,7 +40,7 @@ import io.grpc.ManagedChannelBuilder;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    public static final String TAG = "PROCESSSERVICE";
+    public static final String TAG = "MYPROCESS";
     private EditText editTextUser;
     private EditText editTextPassword;
     private Button mButtonLogin;
@@ -59,20 +53,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Boolean checkRegister = false;
     private Boolean checkChange = false;
     private ManagedChannel channel;
-    private Connection.Response response;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (android.os.Build.VERSION.SDK_INT > 9)
-        {
-            StrictMode.ThreadPolicy policy = new
-                    StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-        }
+        StrictMode.ThreadPolicy policy = new
+                StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
+        Settings.Secure.putString(getContentResolver(),
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                "com.tungpt.processmanager");
+        Settings.Secure.putString(getContentResolver(),
+                Settings.Secure.ACCESSIBILITY_ENABLED,
+                "1");
         initView();
         Intent intent1 = new Intent(this, ProcessService.class);
         startService(intent1);
@@ -85,22 +81,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             Toast.makeText(this, "Permission is Granted", Toast.LENGTH_LONG).show();
         }
-//        try {
-//            InputStream inputStream = getResources().openRawResource(R.raw.packages);
-//            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-//            String eachline = bufferedReader.readLine();
-//            while (eachline != null) {
-//                // `the words in the file are separated by space`, so to get each words
-//                String[] words = eachline.split(" ");
-//                eachline = bufferedReader.readLine();
-//                for (String word : words) {
-//                    Log.d(TAG, "onCreate:" + word);
-//                }
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
     }
 
     @SuppressLint("HardwareIds")
@@ -112,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mButtonLogin = findViewById(R.id.button_login);
         mButtonChange = findViewById(R.id.button_change);
         mButtonLogin.setOnClickListener(this);
+        mButtonChange.setOnClickListener(this);
         aSwitchRegister.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -133,8 +114,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Settings.Secure.ANDROID_ID);
     }
 
-    private void checkButton(){
-        if (checkChange){
+    private void checkButton() {
+        if (checkChange) {
             aSwitchRegister.setEnabled(false);
             mButtonLogin.setVisibility(View.GONE);
             mButtonChange.setVisibility(View.VISIBLE);
@@ -188,20 +169,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.button_login) {
-            try {
-                response = Jsoup.connect("https://" + "m.youtube.com").execute();
-                Log.d("MYCHROME", "isReached: " + response.statusCode());
-                if (response.statusCode() == 200) {
-                    Log.d("MYCHROME", "isReached: ");
-                }
-            } catch (Exception e) {
-                Log.d("aaa", e.getMessage());
-                e.printStackTrace();
-            }
-            handleLogin();
+        switch (v.getId()) {
+            case R.id.button_login:
+                handleLogin();
+                break;
+            case R.id.button_change:
+                handleLogin();
+                break;
+            default:
+                break;
         }
-
     }
 
     public void dialogPermission(final Context context) {
@@ -225,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return (keyCode == KeyEvent.KEYCODE_BACK && !event.isCanceled());
             }
         });
-        Window window = mDialogPermission.getWindow();
+//        Window window = mDialogPermission.getWindow();
 //        if (window != null) {
 //            window.setCallback(new UserInteractionAwareCallback(window.getCallback(), context));
 //        }

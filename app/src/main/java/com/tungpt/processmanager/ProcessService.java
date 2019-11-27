@@ -109,7 +109,6 @@ public class ProcessService extends Service {
                 }
                 if (!mySortedMap.isEmpty()) {
                     currentApp = mySortedMap.get(mySortedMap.lastKey()).getPackageName();
-                    pid = android.os.Process.myPid();
                     for (int i = 0; i < ListProcess.getsListProcess().size(); i++) {
                         if (!IsBlockChecking.getCheckingProcess() && !currentApp.equals("com.tungpt.processmanager") && !(ListProcess.getsListProcess().contains(currentApp))) {
                             Log.d("aaaa", "LISTPROCESS: " + !(ListProcess.getsListProcess().contains(currentApp)));
@@ -124,7 +123,7 @@ public class ProcessService extends Service {
                     }
                 }
             }
-            Log.e(TAG, "Current App in foreground is: " + currentApp + "/" + pid);
+            Log.e(TAG, "Current App in foreground is: " + currentApp);
         } else {
             ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
             String mm = (manager.getRunningTasks(1).get(0)).topActivity.getPackageName();
@@ -160,7 +159,6 @@ public class ProcessService extends Service {
     }
 
     private void processChecked() {
-
         Runnable pullRunnable = new Runnable() {
             @Override
             public void run() {
@@ -184,7 +182,7 @@ public class ProcessService extends Service {
                         listUrls.add(object.getString("Url"));
                     }
                     ListUrl.setListUrl(listUrls);
-                    Log.d("aaaaaa", "onClick: " + ListProcess.getsListProcess() + "/" + ListUrl.getsListUrl());
+                    Log.d("setup-pull", "onClick: " + ListProcess.getsListProcess() + "/" + ListUrl.getsListUrl());
                     channel.shutdown();
                 } catch (Exception e) {
                     e.printStackTrace();

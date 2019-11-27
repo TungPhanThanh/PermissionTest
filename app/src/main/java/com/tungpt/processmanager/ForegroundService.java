@@ -92,10 +92,6 @@ public class ForegroundService extends AccessibilityService {
                             wm.addView(mLayout, lp);
                             configureExitButton();
                         }
-//                        Intent intent = new Intent(this, BlockUrlActivity.class);
-//                        intent.putExtra("url", info.getText().toString());
-//                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-//                        startActivity(intent);
                     }
                 }
             }
@@ -124,7 +120,6 @@ public class ForegroundService extends AccessibilityService {
         exitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d("Onclick", "onClick: ");
                 IsBlockChecking.setIsChecking(false);
                 sendLog("", url);
                 performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
@@ -152,7 +147,7 @@ public class ForegroundService extends AccessibilityService {
                     "\t\"StrLog\": \"mpgewrqio\"\n" +
                     "}").build();
             StdRet reply = stub.stdRpc(request);
-            Log.d("aaaaaa", "onClick: " + request.getAskStr() + "/" + reply.getRetStr() + "/" + reply.getRetSta());
+            Log.d("aaaaaa", "Status: " + reply.getRetStr() + "/" + reply.getRetSta());
             channel.shutdown();
         } catch (Exception e) {
             e.printStackTrace();

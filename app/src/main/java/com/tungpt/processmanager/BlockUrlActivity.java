@@ -96,6 +96,7 @@ public class BlockUrlActivity extends AppCompatActivity {
                     "}").build();
             StdRet reply = stub.stdRpc(request);
             Log.d("aaaaaa", "onClick: " + request.getAskStr() + "/" + reply.getRetStr() + "/" + reply.getRetSta());
+            channel.shutdown();
         } catch (Exception e) {
             e.printStackTrace();
         }

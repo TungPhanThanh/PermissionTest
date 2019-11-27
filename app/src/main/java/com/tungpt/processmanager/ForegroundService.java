@@ -66,7 +66,7 @@ public class ForegroundService extends AccessibilityService {
         if (info == null)
             return;
         if (info.getText() != null && info.getText().length() > 0)
-            if (info.getClassName().toString().equals("android.widget.EditText")) {
+            if (info.getClassName().toString().equals("android.widget.EditText") && !ListUrl.getsListUrl().isEmpty() ) {
                 Log.d("MYCHROME", info.getText() + "");
                 for (int i = 0; i < ListUrl.getsListUrl().size(); i++) {
                     if (Patterns.WEB_URL.matcher(info.getText().toString()).matches() && !info.getText().toString().equals("google.com") &&
@@ -153,6 +153,7 @@ public class ForegroundService extends AccessibilityService {
                     "}").build();
             StdRet reply = stub.stdRpc(request);
             Log.d("aaaaaa", "onClick: " + request.getAskStr() + "/" + reply.getRetStr() + "/" + reply.getRetSta());
+            channel.shutdown();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -162,7 +163,6 @@ public class ForegroundService extends AccessibilityService {
 
     private boolean isReached(String url) {
         try {
-            Log.d("MYCHROME", "isReached: " + url);
             response = Jsoup.connect("https://" + url)
                     .userAgent("Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36")
                     .execute();

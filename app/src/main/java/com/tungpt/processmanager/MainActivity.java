@@ -29,7 +29,6 @@ import com.ibct.kanganedu.StdAsk;
 import com.ibct.kanganedu.StdRet;
 
 import org.json.JSONObject;
-import org.jsoup.Connection;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -62,13 +61,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         StrictMode.ThreadPolicy policy = new
                 StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-
-        Settings.Secure.putString(getContentResolver(),
-                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-                "com.tungpt.processmanager");
-        Settings.Secure.putString(getContentResolver(),
-                Settings.Secure.ACCESSIBILITY_ENABLED,
-                "1");
         initView();
         Intent intent1 = new Intent(this, ProcessService.class);
         startService(intent1);
@@ -97,7 +89,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 checkRegister = isChecked;
-                Log.v("Switch State register=", "" + checkRegister);
             }
         });
 
@@ -106,8 +97,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 checkChange = isChecked;
                 checkButton();
-                Log.v("Switch State change=", "" + checkChange);
-
             }
         });
         deviceId = Settings.Secure.getString(this.getContentResolver(),
@@ -147,6 +136,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 UserID = jsonObject.getString("DeviceId");
                 Log.d("aaaa", request.getAskStr() + "/" + UserID + "/" + reply.getRetSta());
                 statusCode = reply.getRetSta();
+                channel.shutdown();
             } catch (Exception e) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
@@ -157,6 +147,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 SharedPreferences sharedPreferences = getSharedPreferences("User", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putString("UserId", UserID);
+                editor.putString("UserName", editTextUser.getText().toString());
+                editor.putString("Password", editTextPassword.getText().toString());
                 editor.apply();
                 Intent intent = new Intent(this, HomeActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -202,10 +194,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return (keyCode == KeyEvent.KEYCODE_BACK && !event.isCanceled());
             }
         });
-//        Window window = mDialogPermission.getWindow();
-//        if (window != null) {
-//            window.setCallback(new UserInteractionAwareCallback(window.getCallback(), context));
-//        }
     }
 
     @Override
